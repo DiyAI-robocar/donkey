@@ -193,13 +193,13 @@ class Tub(object):
 
             elif typ is 'image':
                 name = self.make_file_name(key, ext='.jpg')
-                val.save(os.path.join(self.path, name))
+                val.save(os.path.join(self.path, name), format='jpeg', quality=90)
                 json_data[key]=name
 
             elif typ == 'image_array':
                 img = Image.fromarray(np.uint8(val))
                 name = self.make_file_name(key, ext='.jpg')
-                img.save(os.path.join(self.path, name))
+                val.save(os.path.join(self.path, name), format='jpeg', quality=90)
                 json_data[key]=name
 
             else:
