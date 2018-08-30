@@ -130,6 +130,9 @@ class Vehicle:
 
                 # save the output to memory
                 if outputs is not None:
+                    #logger.error(">>> entry: " + str(entry))
+                    #logger.error(">>> entry[outputs]: " + str(entry['outputs']))
+                    #logger.error(">>> outputs: " + str(outputs))
                     self.mem.put(entry['outputs'], outputs)
 
     def stop(self):

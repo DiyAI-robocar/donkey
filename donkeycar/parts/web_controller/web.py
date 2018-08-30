@@ -26,7 +26,7 @@ from donkeycar import util
 
 class LocalWebController(tornado.web.Application):
     port = 8887
-    def __init__(self, use_chaos=False):
+    def __init__(self, camera_angle, use_chaos=False):
         """
         Create and publish variables needed on many of
         the web handlers.
@@ -37,6 +37,7 @@ class LocalWebController(tornado.web.Application):
         self.static_file_path = os.path.join(this_dir, 'templates', 'static')
 
         self.angle = 0.0
+        self.camera_angle = camera_angle
         self.throttle = 0.0
         self.mode = 'user'
         self.recording = False
@@ -77,7 +78,7 @@ class LocalWebController(tornado.web.Application):
         if self.chaos_on:
             return random_steering, self.throttle, self.mode, False
         else:
-            return self.angle, self.throttle, self.mode, self.recording
+            return self.angle, self.camera_angle, self.throttle, self.mode, self.recording
 
     def say_hello(self):
         """
@@ -95,7 +96,7 @@ class LocalWebController(tornado.web.Application):
 
     def _run_threaded(self, img_arr=None):
         self.img_arr = img_arr
-        return self.angle, self.throttle, self.mode, self.recording
+        return self.angle, self.camera_angle, self.throttle, self.mode, self.recording
 
     def run(self, img_arr=None):
         return self.run_threaded(img_arr)

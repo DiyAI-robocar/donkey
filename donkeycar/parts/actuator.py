@@ -12,7 +12,7 @@ class PCA9685:
     PWM motor controler using PCA9685 boards.
     This is used for most RC Cars
     """
-    def __init__(self, channel, frequency=60):
+    def __init__(self, channel, frequency=96):
         import Adafruit_PCA9685
         # Initialise the PCA9685 using the default address (0x40).
         self.pwm = Adafruit_PCA9685.PCA9685()
@@ -52,6 +52,33 @@ class PWMSteering:
     def shutdown(self):
         self.run(0) #set steering straight
 
+
+class PWMCameraSteering:
+    """
+    Wrapper over a PWM motor cotnroller to convert angles to PWM pulses.
+    """
+    UP_ANGLE = -1
+    DOWN_ANGLE = 1
+
+    def __init__(self, controller=None,
+                       up_pulse=400,
+                       down_pulse=980):
+
+        self.controller = controller
+        self.up_pulse = up_pulse
+        self.down_pulse = down_pulse
+
+
+    def run(self, camera_angle):
+        #map absolute angle to angle that vehicle can implement.
+        pulse = dk.util.data.map_range(camera_angle,
+                                        self.UP_ANGLE, self.DOWN_ANGLE,
+                                        self.up_pulse, self.down_pulse)
+
+        self.controller.set_pulse(pulse)
+
+    def shutdown(self):
+        self.run(0) #set steering straight
 
 
 class PWMThrottle:
