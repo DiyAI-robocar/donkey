@@ -5,6 +5,8 @@ import socket
 import shutil
 import argparse
 
+import cv2
+
 import donkeycar as dk
 from donkeycar.parts.datastore import Tub
 from .tub import TubManager
@@ -222,8 +224,28 @@ class MakeMovie(BaseCommand):
         return image # returns a 8-bit RGB array
 
 
+### NOTE: this function needs to be duplicated from model.py!!
+class ImagePreProcessor():
+    def run(self, image, horizon = 0.4, y_ratio = 0.7, x_ratio = 0.5):
+        """
+        Given an image as an array, this function crops the top 'horizon' percentage off it and
+        resizes the image afterwards according to the given x and y ratios.
 
+        :param image: given image as array
+        :param horizon: top percentage to be cut off - considered to be the horizon (default: 40%)
+        :param y_ratio: resize ratio in y dimension after cutting horizon: default 50%
+        :param x_ratio: resize ratio in x dimension after cutting horizon: default 25%
 
+        :return: The new image as an array
+        """
+        # crop out the horizon (top percentage of image):
+        y_full = image.shape[0]
+        image = image[int(horizon*y_full):y_full, 0:image.shape[1]]
+
+        # do some resizing
+        image = cv2.resize(image,(0,0), fx=x_ratio, fy=y_ratio, interpolation=cv2.INTER_LANCZOS4);
+
+        return image
 
 class Sim(BaseCommand):
     """
@@ -264,7 +286,7 @@ class Sim(BaseCommand):
             return
 
         #can provide an optional image filter part
-        img_stack = None
+        img_stack = ImagePreProcessor()
 
         #load keras model
         kl.load(args.model)
@@ -275,7 +297,8 @@ class Sim(BaseCommand):
         top_speed = float(args.top_speed)
 
         #start sim server handler
-        ss = SteeringServer(sio, kpart=kl, top_speed=top_speed, image_part=img_stack)
+        steering_scale = 6.0   ### adjust steering by a constant factor
+        ss = SteeringServer(sio, kpart=kl, top_speed=top_speed, image_part=img_stack, steering_scale=steering_scale)
 
         #register events and pass to server handlers
 
