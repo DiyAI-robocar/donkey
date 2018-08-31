@@ -62,10 +62,11 @@ class SteeringServer(object):
         """
         super basic throttle control, derive from this Server and override as needed
         """
-        if speed < self.top_speed:
-            return 0.3
+        #if speed < self.top_speed:
+        #    return 0.3
+        #return 0.0
 
-        return 0.0
+        return 1.0 # full-speed (top-speed limits this only!)
 
     def telemetry(self, sid, data):
         """
