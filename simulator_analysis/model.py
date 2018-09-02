@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 
 # threshold used to ignore consecutive images (as they're basically the same scene)
-img_downsample_threshold = 20
+img_downsample_threshold = 1
 
 image_pos = 0
 angle_pos = 1  
@@ -35,23 +35,29 @@ def get_data(path, prefix):
     
     # first make sure path ends with final '/'
     path = path if path.endswith('/') else (path + '/')
-    
+    glob_path = path + prefix + '*'
+    print(glob_path)
     # generate list of full paths from prefix:
-    path_list = fix_windows_paths(glob.glob(path + prefix + '*'))
-    
+    path_list = fix_windows_paths(glob.glob(glob_path))
+    print ("path_list: "  + str(path_list))
     # read all images into numpy array:
     for entry in path_list:
         # find all record_* json files:
-        json_list = fix_windows_paths(glob.glob(entry + '/record_' + '*'))
+        record_glob_path=entry + '/record_' + '*'
+        print(record_glob_path)
+        json_list = fix_windows_paths(glob.glob(record_glob_path))
         curr_content = np.empty(shape=(len(json_list),), dtype=np.dtype('<U150,f,f'))
         
         first_image_idx = None
-        
+        print (json_list)
         for i, json_file in enumerate(json_list):
+            print (json_file)
             with open(json_file) as f:
                 data = json.load(f)
+                print(data)
                 proper_i = int(data['cam/image_array'].split('_',1)[0]) # get number of image from path name
                 first_image_idx = proper_i if first_image_idx is None else first_image_idx
+                print("fdsssdfsdf",first_image_idx, proper_i);
                 curr_content[proper_i - first_image_idx] = (entry + '/' +data['cam/image_array'], data['user/angle'], data['user/throttle'])
         
         content = curr_content if content is None else np.concatenate([content,curr_content])
@@ -63,7 +69,8 @@ def get_data(path, prefix):
 #  - removes entries around all folder-borders (incl first and last images)
 #  - smooths the angles as a rolling average with fixed window-size
 def adjust_data(data, lengths):
-    N=7
+    # moving window border
+    N=1
 
     adjusted = data.copy()
     ends = [0] + list(np.add.accumulate(lengths))
@@ -97,7 +104,7 @@ def adjust_data(data, lengths):
     return adjusted
 
 # gets raw data and adjusts it to be used in ReadMe notebook
-def get_raw_data(path = '../../DonkeySimWindows/log/', prefix = 'good_new'):
+def get_raw_data(path = '../../tubp', prefix = 'prefix'):
     """ Gets raw train and validation data from directories, returns both as numpy arrays"""
     
     all_content, lengths = get_data(path, prefix)
@@ -234,7 +241,7 @@ def train_test_splity(data, train_split = 0.8):
 
     
 # function to get all data, split it and start training with model defined above:
-def train_model(EPOCHS = 100, verbose = True):
+def train_model(EPOCHS = 10000, verbose = True):
     """ Whole pipeline: get all data, use model to train, returns history and trained model """
     
     now = time.time()
@@ -278,7 +285,7 @@ def train_model(EPOCHS = 100, verbose = True):
     
     ## reduce learning rate when reaching a plateu (30 epochs with no change in the first digit of validation score)
     #reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, epsilon=0.1, cooldown = 5, verbose=verbose_level)
-    stopping = EarlyStopping(monitor='val_loss', min_delta=0.005, patience=10, verbose=verbose_level, mode='auto')
+    stopping = EarlyStopping(monitor='val_loss', min_delta=0.005, patience=100, verbose=verbose_level, mode='auto')
     
     print ('Training model..')
     now = time.time()
@@ -310,4 +317,4 @@ def train_model(EPOCHS = 100, verbose = True):
 ## ( NOT when imported in jupyter ) ;-)
 if __name__ == "__main__":
     print('NOTE: Automatic training of the model is disabled when calling \'python model.py\' because the code runs in the jupyter notebook.\n      If you want to execute model.py as stand-alone then please un-comment the last line in model.py')
-    #history = train_model()
+    history = train_model()
