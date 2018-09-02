@@ -8,7 +8,7 @@ functions to run and train autopilots using keras
 
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.models import Model, load_model
-from tensorflow.python.keras.layers import Convolution2D
+from tensorflow.python.keras.layers import Convolution2D, BatchNormalization, Concatenate, MaxPooling2D
 from tensorflow.python.keras.layers import Dropout, Flatten, Dense, Cropping2D, Lambda
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
 
@@ -79,12 +79,14 @@ class KerasCategorical(KerasPilot):
 class KerasLinear(KerasPilot):
     def __init__(self, model=None, num_outputs=None, *args, **kwargs):
         super(KerasLinear, self).__init__(*args, **kwargs)
+        print("DASDSASDSASAD")
         if model:
             self.model = model
         elif num_outputs is not None:
             self.model = default_n_linear(num_outputs)
         else:
-            self.model = default_linear()
+            print("DASDSASDSASAD")
+            self.model = andreas_linear()
 
     def run(self, img_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -188,6 +190,64 @@ def default_catlin():
 
     return model
 
+# defines the network architecture
+def andreas_linear():
+    """ returns model - see README for details """
+    input_img = Input(shape=(120, 160, 3), name='img_in')
+    
+    # use the NORMALIZED input to initialize the 'network' variable:
+    #network = BatchNormalization(epsilon=0.001, mode=1)(input_img)
+    network = BatchNormalization(epsilon=0.001)(input_img)
+    
+    # Layer 1: 1x1 convolution with 3 outputs to decide on color channel
+    network = Convolution2D(3, (1, 1), activation="relu", padding="same", kernel_regularizer="l2")(network)
+
+    # Layer 2: Inception with 3 convolutional sub-layers: 
+    ### sub-layer 1: 1x1 convolution with 16 outputs, ReLu activation and dropout afterwards
+    conv1 = Convolution2D(16, (1, 1), activation="relu", padding="same", kernel_regularizer="l2")(network)
+    conv1 = Dropout(0.6)(conv1)
+    ### sub-layer 2: stacked two 3x3 convolutions with 16 outputs and ReLu activations and dropout afterwards
+    conv3 = Convolution2D(16, (3, 3), activation="relu", padding="same", kernel_regularizer="l2")(network)
+    conv3 = Convolution2D(16, (3, 3), activation="relu", padding="same", kernel_regularizer="l2")(conv3)
+    conv3 = Dropout(0.6)(conv3)
+    ### sub-layer 3: stacked two 5x5 convolutions with 16 outputs and ReLu activations and dropout afterwards
+    conv5 = Convolution2D(16, (5, 5), activation="relu", padding="same", kernel_regularizer="l2")(network)
+    conv5 = Convolution2D(16, (5, 5), activation="relu", padding="same", kernel_regularizer="l2")(conv5)
+    conv5 = Dropout(0.6)(conv5)
+    ### combine results of 1x1, 3x3, and 5x5 convolutions
+    #network = merge([conv1, conv3, conv5], mode='concat', concat_axis=1)
+    network = Concatenate()([conv1, conv3, conv5])
+    
+    # Layer 3: Max-pooling:
+    network = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="same")(network)
+    
+    # Layer 4: stacked three 3x3 convolutions with 32 outputs and ReLu activations and dropout afterwards
+    network = Convolution2D(32, (3, 3), activation="relu", padding="same", kernel_regularizer="l2")(network)
+    network = Convolution2D(32, (3, 3), activation="relu", padding="same", kernel_regularizer="l2")(network)
+    network = Convolution2D(32, (3, 3), activation="relu", padding="same", kernel_regularizer="l2")(network)
+    network = Dropout(0.6)(network)
+
+    # Layer 5: Max-pooling:
+    network = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="same")(network)
+    
+    # Layer 6: Flatten and Fully Connected layer with 128 size, ReLu activation and dropout afterwards
+    network = Flatten()(network)
+    network = Dense(128, activation="relu", kernel_regularizer="l2")(network)
+    network = Dropout(0.6)(network)
+    
+    # output 'angle_out' : Layer 7: Fully Connected. linearly output to one angle value:
+    angle_out = Dense(1, activation='linear', name='angle_out', kernel_regularizer="l2")(network)
+
+    # output 'angle_out' : Layer 7: Fully Connected. linearly output to one angle value:
+    throttle_out = Dense(1, activation='linear', name='throttle_out', kernel_regularizer="l2")(network)
+
+    # return full model from input to outputs:
+    model = Model(input_img, outputs=[angle_out, throttle_out])
+ 
+    model.compile(optimizer='adam',
+                         loss={'angle_out': 'mse', 'throttle_out': 'mse'},
+                         loss_weights={'angle_out': .98, 'throttle_out': .02}) # always full-throttle seems to be fine for now
+    return model
 
 def default_linear():
     img_in = Input(shape=(120, 160, 3), name='img_in')
