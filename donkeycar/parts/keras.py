@@ -56,7 +56,9 @@ class KerasPilot:
             epochs=epochs,
             verbose=1,
             validation_data=val_gen,
-            callbacks=callbacks_list,
+            max_queue_size=64,
+            workers=32,
+            use_multiprocessing=True,
             validation_steps=steps * (1.0 - train_split) / train_split)
         return hist
 
