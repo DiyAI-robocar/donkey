@@ -194,11 +194,11 @@ def default_catlin():
 def default_linear():
     img_in = Input(shape=(120, 160, 3), name='img_in')
     x = img_in
-    x = Convolution2D(24, (5, 5), strides=(2, 2), activation='relu')(x)
-    x = Convolution2D(32, (5, 5), strides=(2, 2), activation='relu')(x)
-    x = Convolution2D(64, (5, 5), strides=(2, 2), activation='relu')(x)
-    x = Convolution2D(64, (3, 3), strides=(2, 2), activation='relu')(x)
-    x = Convolution2D(64, (3, 3), strides=(1, 1), activation='relu')(x)
+    x = Convolution2D(24, (5, 5), strides=(2, 2), activation='relu', data_format="channels_last")(x)
+    x = Convolution2D(32, (5, 5), strides=(2, 2), activation='relu', data_format="channels_last")(x)
+    x = Convolution2D(64, (5, 5), strides=(2, 2), activation='relu', data_format="channels_last")(x)
+    x = Convolution2D(64, (3, 3), strides=(2, 2), activation='relu', data_format="channels_last")(x)
+    x = Convolution2D(64, (3, 3), strides=(1, 1), activation='relu', data_format="channels_last")(x)
 
     x = Flatten(name='flattened')(x)
     x = Dense(100, activation='linear')(x)
