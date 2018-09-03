@@ -20,7 +20,7 @@ import donkeycar as dk
 #import parts
 from donkeycar.parts.camera import PiCamera
 from donkeycar.parts.transform import Lambda
-from donkeycar.parts.keras import KerasCategorical
+from donkeycar.parts.keras import KerasCategorical, KerasLinear
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.datastore import TubGroup, TubWriter
 from donkeycar.parts.controller import LocalWebController, JoystickController
@@ -73,7 +73,7 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
                                 outputs=['run_pilot'])
 
     # Run the pilot if the mode is not user.
-    kl = KerasCategorical()
+    kl = KerasLinear()
     if model_path:
         kl.load(model_path)
 
@@ -142,18 +142,18 @@ def train(cfg, tub_names, new_model_path, base_model_path=None ):
     y_keys = ['user/angle', 'user/throttle']
     def train_record_transform(record):
         """ convert categorical steering to linear and apply image augmentations """
-        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
+        #record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
         # TODO add augmentation that doesn't use opencv
         return record
 
     def val_record_transform(record):
         """ convert categorical steering to linear """
-        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
+        #record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
         return record
 
     new_model_path = os.path.expanduser(new_model_path)
 
-    kl = KerasCategorical()
+    kl = KerasLinear()
     if base_model_path is not None:
         base_model_path = os.path.expanduser(base_model_path)
         kl.load(base_model_path)
