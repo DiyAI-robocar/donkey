@@ -20,7 +20,7 @@ import donkeycar as dk
 #import parts
 from donkeycar.parts.camera import PiCamera
 from donkeycar.parts.transform import Lambda
-from donkeycar.parts.keras import KerasCategorical, KerasLinear
+from donkeycar.parts.keras import KerasCategorical
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.datastore import TubGroup, TubWriter
 from donkeycar.parts.controller import LocalWebController, JoystickController
@@ -47,10 +47,7 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
-        ctr = JoystickController(max_throttle  =cfg.JOYSTICK_MAX_THROTTLE,
-                                 throttle_axis =cfg.JOYSTICK_THROTTLE_AXIS,
-                                 throttle_scale=cfg.JOYSTICK_THROTTLE_SCALE,
-                                 steering_axis =cfg.JOYSTICK_STEERING_AXIS,
+        ctr = JoystickController(max_throttle=cfg.JOYSTICK_MAX_THROTTLE,
                                  steering_scale=cfg.JOYSTICK_STEERING_SCALE,
                                  auto_record_on_throttle=cfg.AUTO_RECORD_ON_THROTTLE)
     else:
@@ -76,8 +73,7 @@ def drive(cfg, model_path=None, use_joystick=False, use_chaos=False):
                                 outputs=['run_pilot'])
 
     # Run the pilot if the mode is not user.
-    #kl = KerasCategorical()
-    kl = KerasLinear()
+    kl = KerasCategorical()
     if model_path:
         kl.load(model_path)
 
@@ -146,18 +142,18 @@ def train(cfg, tub_names, new_model_path, base_model_path=None ):
     y_keys = ['user/angle', 'user/throttle']
     def train_record_transform(record):
         """ convert categorical steering to linear and apply image augmentations """
-        #record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
+        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
         # TODO add augmentation that doesn't use opencv
         return record
 
     def val_record_transform(record):
         """ convert categorical steering to linear """
-        #record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
+        record['user/angle'] = dk.util.data.linear_bin(record['user/angle'])
         return record
 
     new_model_path = os.path.expanduser(new_model_path)
 
-    kl = KerasLinear()
+    kl = KerasCategorical()
     if base_model_path is not None:
         base_model_path = os.path.expanduser(base_model_path)
         kl.load(base_model_path)
