@@ -34,16 +34,21 @@ class PiCamera(BaseCamera):
 
     def run(self):
         f = next(self.stream)
-        frame = f.array
+        frame = self.preprocess_image(f.array)
         self.rawCapture.truncate(0)
         return frame
+
+    def preprocess_image(self, image, horizon = 0.4, y_ratio = 0.7, x_ratio = 0.5):
+        y_full = image.shape[0]
+        image = image[int(horizon*y_full):y_full, 0:image.shape[1]]
+        return image
 
     def update(self):
         # keep looping infinitely until the thread is stopped
         for f in self.stream:
             # grab the frame from the stream and clear the stream in
             # preparation for the next frame
-            self.frame = f.array
+            self.frame = self.preprocess_image(f.array)
             self.rawCapture.truncate(0)
 
             # if the thread indicator variable is set, stop the thread
