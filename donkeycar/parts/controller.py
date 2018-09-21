@@ -1,12 +1,13 @@
-
 import os
 import array
 import time
 import struct
+# noinspection PyInterpreter
 import vlc #requires vlc installed on rPi
 import RPi.GPIO as GPIO
 
 from donkeycar.parts.web_controller.web import LocalWebController
+from donkeycar.parts.lcd_char import LCD_Char
 
 class Joystick():
     """
@@ -231,29 +232,34 @@ class JoystickController(object):
         self.false_back_pull = 0 # 0 - no need to do anything, 1 - need to do false pull, 2 - need to release false pull
         self.last_throttle = 0.0
 
-        self.LCD_RS = 7
-        self.LCD_E = 8
-        self.LCD_D4 = 25
-        self.LCD_D5 = 24
-        self.LCD_D6 = 23
-        self.LCD_D7 = 18
+        self.lcd_char = LCD_Char()
+        self.lcd_char.lcd_init()
+        self.lcd_char.lcd_string("Rasbperry Pi", 0x80)
+        self.lcd_char.lcd_string("16x2 LCD Test", 0xC0)
 
-        self.LCD_WIDTH = 24  # Maksymalna ilość znaków na linię
-        self.LCD_CHR = True
-        self.LCD_CMD = False
-        self.LCD_LINE_1 = 0x80  # LCD RAM adres dla 1 linii
-        self.LCD_LINE_2 = 0xC0  # LCD RAM adres dla 2 linii
-
-        self.E_PULSE = 0.00005
-        self.E_DELAY = 0.00005
-
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.LCD_E, GPIO.OUT)  # E
-        GPIO.setup(self.LCD_RS, GPIO.OUT)  # RS
-        GPIO.setup(self.LCD_D4, GPIO.OUT)  # DB4
-        GPIO.setup(self.LCD_D5, GPIO.OUT)  # DB5
-        GPIO.setup(self.LCD_D6, GPIO.OUT)  # DB6
-        GPIO.setup(self.LCD_D7, GPIO.OUT)  # DB7
+#        self.LCD_RS = 7
+#        self.LCD_E = 8
+#        self.LCD_D4 = 25
+#        self.LCD_D5 = 24
+#        self.LCD_D6 = 23
+#        self.LCD_D7 = 18
+#
+#        self.LCD_WIDTH = 24  # Maksymalna ilość znaków na linię
+#        self.LCD_CHR = True
+#        self.LCD_CMD = False
+#        self.LCD_LINE_1 = 0x80  # LCD RAM adres dla 1 linii
+#        self.LCD_LINE_2 = 0xC0  # LCD RAM adres dla 2 linii
+#
+#        self.E_PULSE = 0.00005
+#        self.E_DELAY = 0.00005
+#
+#        GPIO.setmode(GPIO.BCM)
+#        GPIO.setup(self.LCD_E, GPIO.OUT)  # E
+#        GPIO.setup(self.LCD_RS, GPIO.OUT)  # RS
+#        GPIO.setup(self.LCD_D4, GPIO.OUT)  # DB4
+#        GPIO.setup(self.LCD_D5, GPIO.OUT)  # DB5
+#        GPIO.setup(self.LCD_D6, GPIO.OUT)  # DB6
+#        GPIO.setup(self.LCD_D7, GPIO.OUT)  # DB7
 
         #We expect that the framework for parts will start a new
         #thread for our update fn. We used to do that and it caused
@@ -364,10 +370,10 @@ class JoystickController(object):
         while self.running and not self.init_js():
             time.sleep(5)
 
-        p = vlc.MediaPlayer("/home/pi/b.mp3")
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-        GPIO.setup(14, GPIO.OUT)
+#        p = vlc.MediaPlayer("/home/pi/b.mp3")
+#        GPIO.setmode(GPIO.BCM)
+#        GPIO.setwarnings(False)
+#        GPIO.setup(14, GPIO.OUT)
 
         while self.running:
             if self.false_back_pull == 2:
@@ -375,16 +381,16 @@ class JoystickController(object):
                 time.sleep(0.05) #letting previous pulse hit servo for a small period of time
                 self.throttle = -0.0
                 self.false_back_pull = 0
-                print("changing throttle to", self.throttle)
-                print("setting false_back_pull to", self.false_back_pull)
+#                print("changing throttle to", self.throttle)
+#                print("setting false_back_pull to", self.false_back_pull)
                 continue
             if self.false_back_pull == 1:
                 #doing false pull
                 time.sleep(0.05)
                 self.throttle = -0.08
                 self.false_back_pull = 2
-                print("changing throttle to", self.throttle)
-                print("setting false_back_pull to", self.false_back_pull)
+#                print("changing throttle to", self.throttle)
+#                print("setting false_back_pull to", self.false_back_pull)
                 continue
 
             button, button_state, axis, axis_val = self.js.poll()
@@ -404,7 +410,7 @@ class JoystickController(object):
                     if (new_angle > 1):
                         new_angle = 1
                     self.camera_angle = new_angle
-                    print("camera_angle", self.camera_angle)
+#                    print("camera_angle", self.camera_angle)
 
 #            if axis == self.throttle_axis:
 #                #this value is often reversed, with positive value when pulling down
@@ -421,7 +427,7 @@ class JoystickController(object):
                     self.last_z_axis_val = axis_val
 
             if axis == 'rz':
-                print("self.last_rz_axis_val", self.last_rz_axis_val)
+#                print("self.last_rz_axis_val", self.last_rz_axis_val)
                 self.throttle = (self.throttle_scale * ((self.last_z_axis_val - axis_val)/2) * self.max_throttle)
                 print("throttle", self.throttle)
                 self.on_throttle_changes()
@@ -429,7 +435,7 @@ class JoystickController(object):
                 #workaround for double back pull
                 if abs(self.throttle) == 0.0 and self.last_rz_axis_val > -1:
                     self.false_back_pull = 1
-                    print("setting false_back_pull to", self.false_back_pull)
+#                    print("setting false_back_pull to", self.false_back_pull)
 
                 self.last_rz_axis_val = axis_val
 
@@ -437,44 +443,44 @@ class JoystickController(object):
                 if (self.camera_angle > -1 + 0.05):
                     self.camera_default_angle -= 0.05
                     self.camera_angle = self.camera_default_angle
-                    print("camera_angle", self.camera_angle)
-                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
-                    self.lcd_string("zero cam angle:")
-                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
-                    self.lcd_string("%.2f" % self.camera_angle)
+#                    print("camera_angle", self.camera_angle)
+#                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
+#                    self.lcd_string("zero cam angle:")
+#                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
+#                    self.lcd_string("%.2f" % self.camera_angle)
 
             if button == 'dpad_down' and button_state == 1:
                 if (self.camera_angle < 1 - 0.05):
                     self.camera_default_angle += 0.05
                     self.camera_angle = self.camera_default_angle
-                    print("camera_angle", self.camera_angle)
-                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
-                    self.lcd_string("zero cam angle:")
-                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
-                    self.lcd_string("%.2f" % self.camera_angle)
+#                    print("camera_angle", self.camera_angle)
+#                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
+#                    self.lcd_string("zero cam angle:")
+#                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
+#                    self.lcd_string("%.2f" % self.camera_angle)
 
-            if button == 'a' and button_state == 1:
-                os.system('/usr/bin/mplayer -ao pulse -af channels=2,resample=48000:1 /home/pi/sound/meepmeep.wav &')
+            #if button == 'a' and button_state == 1:
+                #os.system('/usr/bin/mplayer -ao pulse -af channels=2,resample=48000:1 /home/pi/sound/meepmeep.wav &')
                 #p = vlc.MediaPlayer("/home/pi/sound/moo.mp3")
                 #p.play()
 
-            if button == 'x' and button_state == 1:
-                GPIO.output(14, GPIO.HIGH)
+#            if button == 'x' and button_state == 1:
+#                GPIO.output(14, GPIO.HIGH)
+#
+#            if button == 'x' and button_state == 0:
+#                GPIO.output(14, GPIO.LOW)
 
-            if button == 'x' and button_state == 0:
-                GPIO.output(14, GPIO.LOW)
+#            if button == 'b' and button_state == 1:
+#                self.lcd_init()
+#
+#                # wysłanie tekstu na pierwszą linię
+#                self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
+#                self.lcd_string("test")
+#                # wysłanie tekstu nadrugą linię
+#                self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
+#                self.lcd_string("wyswietlacza LCD")
 
             if button == 'b' and button_state == 1:
-                self.lcd_init()
-
-                # wysłanie tekstu na pierwszą linię
-                self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
-                self.lcd_string("test")
-                # wysłanie tekstu nadrugą linię
-                self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
-                self.lcd_string("wyswietlacza LCD")
-
-            if button == 'tr' and button_state == 1:
                 """
                 switch modes from:
                 user: human controlled steer and throttle
@@ -483,22 +489,22 @@ class JoystickController(object):
                 """
                 if self.mode == 'user':
                     self.mode = 'local_angle'
-                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
-                    self.lcd_string("changed mode to:")
-                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
-                    self.lcd_string("LOCAL ANGLE")
+#                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
+#                    self.lcd_string("changed mode to:")
+#                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
+#                    self.lcd_string("LOCAL ANGLE")
                 elif self.mode == 'local_angle':
                     self.mode = 'local'
-                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
-                    self.lcd_string("changed mode to:")
-                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
-                    self.lcd_string("LOCAL")
+#                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
+#                    self.lcd_string("changed mode to:")
+#                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
+#                    self.lcd_string("LOCAL")
                 else:
                     self.mode = 'user'
-                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
-                    self.lcd_string("changed mode to:")
-                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
-                    self.lcd_string("USER")
+#                    self.lcd_byte(self.LCD_LINE_1, self.LCD_CMD)
+#                    self.lcd_string("changed mode to:")
+#                    self.lcd_byte(self.LCD_LINE_2, self.LCD_CMD)
+#                    self.lcd_string("USER")
                 print('new mode:', self.mode)
 
             if button == 'circle' and button_state == 1:
