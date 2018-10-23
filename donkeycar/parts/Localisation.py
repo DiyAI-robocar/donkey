@@ -1,30 +1,28 @@
 import socket
 
 
-class BaseLocalisation:
-    def run_threaded(self):
-    	# ToDo parse the values!!!
-        return self.data
-
-
-class Localisation(BaseLocalisation):
+class Localisation:
 	"""
 	Calss to recieve the longitude and latitude.
 	"""
 	def __init__(self):
 		self.udp_ip = '127.0.0.1'
 		self.udp_socket = 5005
-		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-   		sock.bind((self.udp_ip, self.udp_socket))
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+   		self.sock.bind((self.udp_ip, self.udp_socket))
 
 		self.on = True
 
-	def run(self):
-		pass
+		self.data = None
+		self.addr = None
 
 	def update(self):
 		while self.on:
-			self.data, self.addr = self.sock.recvfrom(1024)
+			self.data, self.addr = self.sock.recvmsg(1024)
+
+    def run_threaded(self):
+    	# ToDo parse the values!!!
+        return self.data
 
 	def shutdown(self):
 		self.on = False
