@@ -4,7 +4,7 @@ import json
 
 class MapMatching:
 	"""
-	Class to uppdate the map file 
+	Class to update the map file 
 	"""
 	def __init__(self):
 		self.github_file = "https:/github.com/path/to/the/file"
@@ -21,7 +21,7 @@ class MapMatching:
 
 			sleep(10)
 
-	der run_threaded(self):
+	def run_threaded(self):
 		return self.map
 
 	def shutdown(self):
