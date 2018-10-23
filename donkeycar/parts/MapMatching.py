@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 
 
 class MapMatching:
@@ -19,7 +20,7 @@ class MapMatching:
 			self.response = requests.get(self.github_file).content()
 			self.map = json.load(self.response)
 
-			sleep(10)
+			time.sleep(10)
 
 	def run_threaded(self):
 		return self.map
